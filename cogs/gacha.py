@@ -133,10 +133,39 @@ class Gacha(commands.Cog):
         embed.add_field(name= "/pull: " , value="Does a single pull on the gacha.", inline=False)
         embed.add_field(name= "/10pull: ", value="Does 10 consecutive pulls on the gacha.", inline=False)
         embed.add_field(name="Attempts: ", value=f"{attempts}")
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
         connection.commit()
         connection.close()
     
+    @app_commands.command(name="reset", description="Reset the user's attempts to 0, including pity.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def reset(self, interaction:discord.Interaction, user: discord.User):
+        
+        connection = sqlite3.connect("./cogs/attempts.db")
+        cursor = connection.cursor()
+        user_id = user.id
+
+        cursor.execute("SELECT * FROM Gacha WHERE user_id = ?", (user_id,))
+        result = cursor.fetchone()
+
+        if result is None:
+            await interaction.response.send_message("User ID not found in database, they have not used the gacha yet.", ephemeral=True)
+            return
+        else:        
+            cursor.execute("UPDATE Gacha SET attempts = 0 WHERE user_id = ?", (user_id,))
+            print("Attempts reset.")
+            await interaction.response.send_message(f"{user.name}'s attempts have been reset to 0.", ephemeral=True)
+
+            connection.commit()
+            connection.close()
+
+    @reset.error
+    async def reset_error(self, interaction: discord.Interaction, error):
+        if isinstance(error, app_commands.errors.MissingPermissions):
+            await interaction.response.send_message("You do not have the required permissions to use this command.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"An error occurred: {error}", ephemeral=True)    
+
 async def setup(bot):
     await bot.add_cog(Gacha(bot))
