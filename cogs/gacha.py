@@ -23,27 +23,33 @@ class Gacha(commands.Cog):
         cursor.execute("SELECT * FROM Gacha WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
         result = cursor.fetchone()
 
-        if result is None:
-            attempts = 1
-            cursor.execute("INSERT INTO Gacha (guild_id, user_id, attempts) VALUES (?, ?, ?)", (guild_id, user_id, attempts))
+        if result is None:            
+                attempts, s_pity, a_pity = 1, 1, 1
+                cursor.execute("INSERT INTO Gacha (guild_id, user_id, attempts, s_pity, a_pity) VALUES (?, ?, ?, ?, ?)", (guild_id, user_id, attempts, s_pity, a_pity))
         else:
-            attempts = result[2] + 1
-            cursor.execute("UPDATE Gacha SET attempts = ? WHERE guild_id = ? AND user_id = ?", (attempts, guild_id, user_id))
+                attempts, s_pity, a_pity = result[2] + 1, result[3] + 1, result[4] + 1
+                cursor.execute("UPDATE Gacha SET attempts = ?, S_pity = ?, A_pity = ? WHERE guild_id = ? AND user_id = ?", (attempts, s_pity, a_pity, guild_id, user_id))  
 
         roll = random.randrange(0,1000)
 
-        if 994 < roll < 1000 or attempts % 91 == 90:
+        if 994 < roll < 1000 or s_pity == 89:
             pull_result = "**S-Rank**"
             rank_color = discord.Color.yellow()
+            s_pity = 0
+            cursor.execute("UPDATE Gacha SET S_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
             url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/d/d0/Icon_AgentRank_S.png/revision/latest/scale-to-width-down/32?cb=20240914140011"
-        elif 900 < roll < 994 or attempts % 11 == 10:
+        elif 900 < roll < 994 or a_pity == 9:
             pull_result = "A-rank"
             rank_color = discord.Color.purple()
+            a_pity = 0
+            cursor.execute("UPDATE Gacha SET A_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
             url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/5/5c/Icon_AgentRank_A.png/revision/latest/scale-to-width-down/32?cb=20240914135957"
         else:
             pull_result = "B-rank"
             rank_color = discord.Color.blue()
             url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/6/6e/Item_Rank_B.png/revision/latest/scale-to-width-down/32?cb=20231125052351"
+
+        print(f"Result obtained: {pull_result}. Sending message...")
 
         embed = discord.Embed(title="Pull result:", description=f"{pull_result}", color = rank_color)
         embed.set_thumbnail(url=url)
@@ -66,25 +72,31 @@ class Gacha(commands.Cog):
 
             cursor.execute("SELECT * FROM Gacha WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
             result = cursor.fetchone()
+            print(result)
 
             if result is None:
-                attempts = 1
-                cursor.execute("INSERT INTO Gacha (guild_id, user_id, attempts) VALUES (?, ?, ?)", (guild_id, user_id, attempts))
+                attempts, s_pity, a_pity = 1, 1, 1
+                cursor.execute("INSERT INTO Gacha (guild_id, user_id, attempts, S_pity, A_pity) VALUES (?, ?, ?, ?, ?)", (guild_id, user_id, attempts, s_pity, a_pity))
             else:
-                attempts = result[2] + 1
-                cursor.execute("UPDATE Gacha SET attempts = ? WHERE guild_id = ? AND user_id = ?", (attempts, guild_id, user_id))
+                attempts, s_pity, a_pity = result[2] + 1, result[3] + 1, result[4] + 1
+                cursor.execute("UPDATE Gacha SET attempts = ?, S_pity = ?, A_pity = ? WHERE guild_id = ? AND user_id = ?", (attempts, s_pity, a_pity, guild_id, user_id))
 
             roll = random.randrange(0,1000)
 
-            if 994 < roll < 1000 or attempts % 91 == 90:
+            if 994 < roll < 1000 or s_pity >= 89:
                 pull_list.append("**S-rank**")
                 s_color = True
-            elif 900 < roll < 994 or attempts % 11 == 10:
+                a_color = False
+                s_pity = 0
+                cursor.execute("UPDATE Gacha SET S_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+            elif 900 < roll < 994 or a_pity >= 9:
                 pull_list.append("A-rank")
                 s_color = False
+                a_color = True
+                a_pity = 0
+                cursor.execute("UPDATE Gacha SET A_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
             else:
                 pull_list.append("B-rank")
-                s_color = False
 
             pull_counter += 1
             
@@ -94,7 +106,7 @@ class Gacha(commands.Cog):
         if s_color == True:
             rank_color = discord.Color.yellow()
             url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/d/d0/Icon_AgentRank_S.png/revision/latest/scale-to-width-down/32?cb=20240914140011"
-        else:
+        elif a_color == True:
             rank_color = discord.Color.purple()
             url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/5/5c/Icon_AgentRank_A.png/revision/latest/scale-to-width-down/32?cb=20240914135957"
 
@@ -120,16 +132,17 @@ class Gacha(commands.Cog):
         guild_id = interaction.guild.id
         user_id = interaction.user.id
 
-        attempts = cursor.execute("SELECT attempts FROM Gacha WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+        cursor.execute("SELECT * FROM Gacha WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
+        result = cursor.fetchone()
 
-        if attempts is None:
-            attempts = 0
+        if result is None:
+            attempts, s_pity, a_pity = 0, 0, 0
         else:
-            attempts = cursor.fetchone()
+            attempts, s_pity, a_pity = result[2:5]
 
         embed = discord.Embed(title="Information on the Gacha:")
         embed.add_field(name= "Rates: ", value = "S-rank: 0.6%, A-rank: 9.4%, B-rank: 90%", inline=False)
-        embed.add_field(name= "Pity: ", value = "S-rank: 90 attempts, A-Rank: 10 attempts")
+        embed.add_field(name= "Pity: ", value = f"S-rank: {s_pity}(90), A-Rank: {a_pity}(10) attempts")
         embed.add_field(name= "/pull: " , value="Does a single pull on the gacha.", inline=False)
         embed.add_field(name= "/10pull: ", value="Does 10 consecutive pulls on the gacha.", inline=False)
         embed.add_field(name="Attempts: ", value=f"{attempts}")
@@ -153,9 +166,9 @@ class Gacha(commands.Cog):
             await interaction.response.send_message("User ID not found in database, they have not used the gacha yet.", ephemeral=True)
             return
         else:        
-            cursor.execute("UPDATE Gacha SET attempts = 0 WHERE user_id = ?", (user_id,))
-            print("Attempts reset.")
-            await interaction.response.send_message(f"{user.name}'s attempts have been reset to 0.", ephemeral=True)
+            cursor.execute("UPDATE Gacha SET attempts = 0, s_pity = 0, a_pity = 0 WHERE user_id = ?", (user_id,))
+            print("Attempts and pity reset.")
+            await interaction.response.send_message(f"{user.name}'s attempts and pity have been reset to 0.", ephemeral=True)
 
             connection.commit()
             connection.close()
