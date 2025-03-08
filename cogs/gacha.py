@@ -36,24 +36,33 @@ class Gacha(commands.Cog):
                 roll = random.randrange(0,1000)
 
                 if 994 < roll < 1000 or s_pity == 89:
-                    pull_result = "**S-Rank**"
+                    cursor.execute("SELECT * FROM Characters WHERE char_rank = 'S-rank' ORDER BY RANDOM() LIMIT 1")
+                    result = cursor.fetchone()
+                    pull_result = f"**{result[2]}**"
                     rank_color = discord.Color.yellow()
                     s_pity = 0
                     cursor.execute("UPDATE Gacha SET S_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
                     url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/d/d0/Icon_AgentRank_S.png/revision/latest/scale-to-width-down/32?cb=20240914140011"
                 elif 900 < roll < 994 or a_pity == 9:
-                    pull_result = "A-rank"
+                    cursor.execute("SELECT * FROM Characters WHERE char_rank = 'A-rank' ORDER BY RANDOM() LIMIT 1")
+                    result = cursor.fetchone()                    
+                    pull_result = f"{result[2]}"
                     rank_color = discord.Color.purple()
                     a_pity = 0
                     cursor.execute("UPDATE Gacha SET A_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
                     url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/5/5c/Icon_AgentRank_A.png/revision/latest/scale-to-width-down/32?cb=20240914135957"
                 else:
-                    pull_result = "B-rank"
+                    print("B-rank pull. Finding in database...")
+                    cursor.execute("SELECT * FROM Characters WHERE char_rank = 'B-rank'ORDER BY RANDOM() LIMIT 1")
+                    print("B-rank found.")
+                    result = cursor.fetchone()                        
+                    pull_result = f"{result[2]}"
                     rank_color = discord.Color.blue()
                     url = "https://static.wikia.nocookie.net/zenless-zone-zero/images/6/6e/Item_Rank_B.png/revision/latest/scale-to-width-down/32?cb=20231125052351"
 
                 embed = discord.Embed(title="Pull result:", description=f"{pull_result}", color = rank_color)
                 embed.set_thumbnail(url=url)
+                embed.set_image(url=result[3])
                 await interaction.response.send_message(embed=embed)
             else:
                 attempts -= 1
@@ -91,19 +100,25 @@ class Gacha(commands.Cog):
                 roll = random.randrange(0,1000)
 
                 if 994 < roll < 1000 or s_pity >= 89:
-                    pull_list.append("**S-rank**")
+                    cursor.execute("SELECT * FROM Characters WHERE char_rank = 'S-rank' ORDER BY RANDOM() LIMIT 1")
+                    result = cursor.fetchone()
+                    pull_list.append(f"**{result[2]}**")
                     s_color = True
                     a_color = False
                     s_pity = 0
                     cursor.execute("UPDATE Gacha SET S_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
                 elif 900 < roll < 994 or a_pity >= 9:
-                    pull_list.append("A-rank")
+                    cursor.execute("SELECT * FROM Characters WHERE char_rank = 'A-rank' ORDER BY RANDOM() LIMIT 1")
+                    result = cursor.fetchone()
+                    pull_list.append(f"{result[2]}")
                     s_color = False
                     a_color = True
                     a_pity = 0
                     cursor.execute("UPDATE Gacha SET A_pity = 0 WHERE guild_id = ? AND user_id = ?", (guild_id, user_id))
                 else:
-                    pull_list.append("B-rank")
+                    cursor.execute("SELECT * FROM Characters WHERE char_rank = 'B-rank' ORDER BY RANDOM() LIMIT 1")
+                    result = cursor.fetchone()                    
+                    pull_list.append(f"{result[2]}")
 
                 pull_counter += 1
                 tokens -= 1

@@ -2,12 +2,26 @@ GachaBot
 
 This is a project in order to improve my programming skills, while at the same time doing something that might be fun or interesting. The objective is to create a discord bot that is accurately able to simulate a gacha system, popular in many games these days. 
 
-Currently the bot can be added to any discord server, where users can do "pulLs" with the /pull command, which will then lead the bot into picking one of 3 rarities, B, A, and S, and return a message with which rarity they got. There's also a /10pull command, which does 10 consecutive pulls, and returns the results in a list to the user over discord. Finally, there is an /info command that allows the user to consult rates, pity, the available commands and total # of attempts (which is used to calculate pity).
+Currently the bot is capable of pulling by selecting from 3 different rarities (S, A and B), and from that rarity, picking a random character from a database based on that rarity. For this example I've used characters from Zenless Zone Zero, but you could add any characters you want, by manually adjusting the Characters table in the .db file. 
 
-Future planned additions:
+Tokens are also required to perform pulls, and for that I've added an admin command that allows admins to give anyone tokens. You may also implement it into leveling systems or some kind of daily reward for users.
 
-- Individual pity tracker for A-rank and S-rank, allowing the user to know how much pity they have for each.
+Available commands:
 
-- "Token" system, where users are only able to use the /pull and /10pull commands if they have enough tokens. Tokens can be gained through other systems and given to users by admin-specific slash commands.
+/pull: does a single pull, returns a character and image of said character.
 
-- Individual character tracker, this is a gacha after all! Allow for the main gacha system to pick a character from a database to be displayed in the output, and also granted to the user, so that they can collect different characters.
+/10pull: does 10 consecutive pulls, and returns a list with the results.
+
+/info: displays a window with information such as rates, pity, total attempts and available tokens
+
+/reset: (admin only) resets an user's total attempts and pity.
+
+/givetoken: (admin only) grants any user a specified amount of tokens.
+
+Future additions:
+
+At this point I've made all major additions I've wanted to the bot, so I will not make any changes now. However, there are other things to add:
+
+- Some way to keep track of obtained characters per user. (maybe a set?)
+
+- "Soft" pity, which means rates for S-rank goes up the closer it gets to "hard" pity. I'm not certain how this will be implemented yet.
